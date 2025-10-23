@@ -1,0 +1,69 @@
+-----------------------PBCS------------------------
+
+**Description**
+
+E2SE is a system for securely storing private data in the cloud with the help of a key server (an App server). With this system, a user could use one password to have access to the private data at any device. The plain data is visible to the legitimate user with correct password on client side and blind to both the cloud and key server.
+
+Our implementation includes a client and a key server (only the part for secure storage). We use AWS S3 as the sotrage cloud. The supported operations that users could do are as following:
+
+Register: Users register
+Give: User share the data encryption key with the key server and cloud server
+Take: User reconstruct the data enncryption key with the key server and cloud server
+Secure Deposit: User encrypt data using the data encryption key, and upload to the cloud server
+Secure Retrieve: User retrieve the encrypted data from the cloud server and decrypt it.
+
+
+**Installation**
+
+Download the full repository fot both the client and key server.
+
+**Requirements**
+
+Software requirements on both client and key server:
+
+* Python
+
+Hardware requirement to the client:
+
+* Programmic access to the AWS S3 server.If any user want to test/use this prototype, plaese first login AWS console via https://aws.amazon.com/ with your own AWS account and create the security credential to programically access the AWS S3. If users want to use other cloud storage services, the implementation of Client class should be modified a bit to apply to the APIs the storage cloud provides. So far the proviided prototype only support AWS S3 as the storage server.
+* The client and key server could be deployed on different devices for standard use. It is ok to run two processes for the client and key server in one device to verify the function.
+
+**Preparation** 
+
+Please make sure the above requirements are satisfied fist and prepare the following.
+
+Access key to programmically access the AWS S3.
+
+* Given your own access key for S3, you can set the accessKeyId and secretKeyId in the code. Please refer to this guildline https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html for understanding and getting the access key of AWS. The credential information is configered by yourself in the config.properties file. We will specify it in the Compile step.
+
+Certificates for TLS communication.
+
+* During the communication between client and key server/cloud server, the client authenticates key server and cloud server via servers' certificates. 
+We have generated the self-signed CA root certificate using OpenSSL, and use it to sign the key server certificate. You can find the required certificates in E2se4j/certificateNew.
+
+  
+
+**test datasets**
+
+The test data consists of binary files ranging from 1MB to 200MB.
+
+Generation operation of test dataset:
+
+To open a terminal and generate an nMB file, the command is as follows: fsutil file createnew 1*nmb 1048576*n
+
+**Run**
+
+Python [main] [server]
+
+Terminal 1：python E2seMain.py authserver 
+
+Python [main] [client] [source file path]
+
+Terminal 2：python E2seMain.py client \DataFile\1mb
+
+
+
+
+**Test**
+
+Generate binary files ranging from 1MB to 200MB, execute the code, and record the execution time of the code.
