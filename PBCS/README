@@ -2,7 +2,7 @@
 
 **Description**
 
-E2SE is a system for securely storing private data in the cloud with the help of a key server (an App server). With this system, a user could use one password to have access to the private data at any device. The plain data is visible to the legitimate user with correct password on client side and blind to both the cloud and key server.
+PBCS is a system for securely storing private data in the cloud with the help of a key server (an App server). With this system, a user could use one password to have access to the private data at any device. The plain data is visible to the legitimate user with correct password on client side and blind to both the cloud and key server.
 
 Our implementation includes a client and a key server (only the part for secure storage). We use AWS S3 as the sotrage cloud. The supported operations that users could do are as following:
 
@@ -45,7 +45,7 @@ We have generated the self-signed CA root certificate using OpenSSL, and use it 
 
 **test datasets**
 
-The test data consists of binary files ranging from 1MB to 200MB.
+The test data consists of binary files ranging from 1MB to 700MB.
 
 Generation operation of test dataset:
 
