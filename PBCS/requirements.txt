@@ -1,0 +1,5 @@
+ecdsa
+
+pycryptodome
+
+boto3
