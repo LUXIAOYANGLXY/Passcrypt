@@ -18,8 +18,6 @@ import paramiko
 def client_run_register(protocol,uid, pw,run_time):
     HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
-    # HOST = '10.102.104.8'
-    # PORT = 25555
     # HOST = '127.0.0.1'
     # PORT = 20202
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -67,8 +65,6 @@ def client_run_enc(protocol: AEKEProtocol, source_file_path,run_time,uid, pw_inp
     print("###############客户端请求与server建立安全信道###############")
     HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
-    # HOST = '10.102.104.8'
-    # PORT = 25555
     # HOST = '127.0.0.1'
     # PORT = 20202
     total_bytes = 0
@@ -201,8 +197,6 @@ def client_run_enc(protocol: AEKEProtocol, source_file_path,run_time,uid, pw_inp
 def client_run_dec(protocol: AEKEProtocol, dest_path:str,k1:str,inter_path:str,k3:str,run_time:dict,uid: str, pw_input: str,bucketname:str):
     HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
-    # HOST = '10.102.104.8'
-    # PORT = 25555
     # HOST = '127.0.0.1'
     # PORT = 20202
     total_bytes =0
@@ -343,13 +337,7 @@ def measure_file_upload_download(protocol:AEKEProtocol, file_path: str, uid:str,
 
         payload = {'type': 3, 'uid': uid}
         print(f"[CLIENT] 发送 uid: {uid}")
-        # s.sendall(pickle.dumps(payload) )
         sent_bytes=send_with_length(s, payload)
-        # protocol.communication_scale[uid]["send_bytes"] += sent_bytes
-        # total_bytes_sent2 += sent_bytes
-
-
-
         # 发送数据
         start_time = time.time()
         try:
@@ -372,7 +360,6 @@ def measure_file_upload_download(protocol:AEKEProtocol, file_path: str, uid:str,
         run_time["client_deposit_plain_time"] = client_deposit_plain_time
 
         start_time = time.time()
-
         # 接收返回数据
         buf = BytesIO()
         start_time1 = time.time()
@@ -382,21 +369,16 @@ def measure_file_upload_download(protocol:AEKEProtocol, file_path: str, uid:str,
             max_concurrency=10,
             use_threads=True
         )
-        # recv_with_length(s)
-        # cc_file_path = os.path.join(inter_path, "received_cc_from_s3")
-        # with open(cc_file_path, 'wb') as f:
-        #     protocol.s3_client.download_fileobj(bucketname, f"{uid}/{uid}_s3s3", f,Config=config)
 
         protocol.s3_client.download_fileobj(bucket_name, f"{uid}/{uid}_s3s3", buf, Config=config)
         buf.seek(0)
         sent_bytes=send_with_length(s, b'OK')
-        # protocol.communication_scale[uid]["send_bytes"] += sent_bytes
-        # total_bytes_sent2 += sent_bytes
 
         client_retrieve_plain_time = (time.time() - start_time) * 1000
         print(f"[CLIENT] client_retrieve_plain_time 耗时: {client_retrieve_plain_time:.2f} ms")
         protocol.user_time_client[uid]["client_retrieve_plain_time"] = client_retrieve_plain_time
         run_time["client_retrieve_plain_time"] = client_retrieve_plain_time
+
 
 
 
