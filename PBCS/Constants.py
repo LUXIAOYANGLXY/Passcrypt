@@ -88,7 +88,7 @@ def load_config():
 try:
     config_data = load_config()
     AUTH_SERVER_ADDRESS = config_data["authServerIp"]
-    AUTH_SERVER_ADDRESS_EC2 = '54.250.191.84'
+    AUTH_SERVER_ADDRESS_EC2 = '54.250.*******'
     AUTH_SERVER_PORT_NUMBER = config_data["authServerPort"]
     AUTH_SERVER_NAME = config_data["authServerName"]
 except Exception as e:
@@ -96,4 +96,5 @@ except Exception as e:
     # 可选：设置默认值或退出程序
     AUTH_SERVER_ADDRESS = "localhost"
     AUTH_SERVER_PORT_NUMBER = 20202
+
     AUTH_SERVER_NAME = "CN=usyd.authserver,OU=authserver,O=server,L=sydney,ST=NSW,C=AU"
