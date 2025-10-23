@@ -197,19 +197,6 @@ def server_run_dec(protocol: AEKEProtocol, server_id: str,bucketname:str,k0:str,
         # protocol.user_time_server1[uid]["server_aEKE_time1"] = aEKE_time1
         run_time["server_run_dec_time"] = server_run_dec_time
         run_scale["server_run_dec_time"] = server_run_dec_time
-        # # 等待客户端确认接收
-        # try:
-        #     # conn.settimeout(100)
-        #     # ack = conn.recv(2)
-        #     ack = recv_with_length(conn)
-        #     if ack == b'OK':
-        #         print("[SERVER] ✅ 客户端确认接收成功")
-        #     else:
-        #         print("[SERVER] ⚠️ 客户端响应异常")
-        # except socket.timeout:
-        #     print("[SERVER] ⚠️ 未收到客户端确认（可能断开了）")
-        # print("[SERVER] 运行时间protocol.user_time_server2：", protocol.user_time_server2[uid])
-
 
 def start_file_echo_server(protocol:AEKEProtocol,bucketname,conn):
             # 接收客户端发送的数据
@@ -217,3 +204,4 @@ def start_file_echo_server(protocol:AEKEProtocol,bucketname,conn):
             print("[SERVER] 文件上传成功", ack1)
             ack2 = recv_with_length(conn)
             print("[SERVER] 文件上传成功", ack2)
+
