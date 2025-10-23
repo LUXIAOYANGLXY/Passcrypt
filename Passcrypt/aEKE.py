@@ -113,8 +113,6 @@ class AEKEProtocol:
             nonce = ciphertext_bundle[:12]  # 提取前12字节作为nonce
             tag = ciphertext_bundle[12:28]  # 提取第12到28字节作为tag
             ciphertext = ciphertext_bundle[28:]  # 提取第28字节到最后的部分作为密文
-            # cipher = AES.new(key[:self.KEY_LEN], AES.MODE_GCM, nonce=nonce)  # 创建加密器对象
-            # return cipher.decrypt_and_verify(ciphertext, tag)  # 解密并验证
             decryptor = Cipher(
                 algorithms.AES(key),
                 modes.GCM(nonce, tag),
@@ -314,4 +312,5 @@ class AEKEProtocol:
                 raise
 
         return dec_file_path
+
 
