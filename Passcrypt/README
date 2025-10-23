@@ -1,1 +1,37 @@
-Passcrypt
+----------------------------Passcrypt-----------------------------------
+***System Description***
+The Passcrypt system provides data privacy protection, enabling users to securely store data in the cloud and manage corresponding data encryption keys.
+Our implementation includes a client and a server, using AWS S3 as the storage cloud. Users can perform the following operations:
+Registration: Client registration
+Data Encryption: The client generates data encryption keys, completes data encryption, and manages the keys
+Data Decryption: The client retrieves encrypted data, recovers the data encryption keys, and decrypts the data
+Installation
+Download the complete repository for both the client and server.
+
+***Requirements***
+Software requirements for both client and server:
+Python
+Hardware requirements for the client:
+Programmatic access to AWS EC2 and AWS S3 servers. Please first log in to your AWS account via https://aws.amazon.com/ and create security credentials for programmatic access to AWS S3.
+If other cloud storage services are required, slight modifications to the Client class implementation are needed to adapt to the APIs provided by the target storage cloud. The current prototype only supports AWS S3 as the storage server.
+In standard usage scenarios, the client and key server should be deployed on different devices
+
+***Preparation***
+Ensure the above requirements are met and complete the following preparations:
+Access keys for programmatic access to AWS S3:
+After obtaining the S3 access keys, you can set the accessKeyId and secretKeyId in the code. Please refer to https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html to understand and obtain AWS access keys. Credential information must be configured by yourself in the config.properties file.
+
+***Test Datasets***
+The test data consists of binary files ranging from 1MB to 700MB.
+Command to generate test datasets:
+Open a terminal and use the following command to generate an nMB file: fsutil file createnew 1nmb 1048576n
+
+***Execution***
+Python [main] [server]
+Terminal 1: python main.py server
+Python [main] [client] [source file path]
+Terminal 2: python main.py client \DataFile\1mb
+
+***Testing Instructions***
+Generate binary files ranging from 1MB to 700MB, execute the code, and record data such as code execution time.
+
