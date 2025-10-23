@@ -18,12 +18,7 @@ INTER_FILE1="D:/Pycharm/Project/SecureChannelPassCrypt/SecureChannelPassCrypt/Pa
 INTER_ENC_FILE="D:/Pycharm/Project/SecureChannelPassCrypt/SecureChannelPassCrypt/PassCrypt-SecureChannel-s3-ec2/inter_enc_file/"
 C1_PATH="D:/Pycharm/Project/SecureChannelPassCrypt/SecureChannelPassCrypt/PassCrypt-SecureChannel-s3-ec2/c1_path/"
 SERVER_AEKE_PATH = "D:/Pycharm/Project/SecureChannelPassCrypt/SecureChannelPassCrypt/PassCrypt-SecureChannel-s3-ec2/server_aeke_path/"
-# ENC_FILE="./local_storage/enc_file/"
-# INTER_FILE="./inter_file/"
-# INTER_FILE1="./inter_file1/"
-# INTER_ENC_FILE="./inter_enc_file/"
-# C1_PATH="./c1_path/"
-# SERVER_AEKE_PATH = "./server_aeke_path/"
+
 
 
 # ————————————————————————
@@ -58,3 +53,4 @@ except Exception as e:
     # 可选：设置默认值或退出程序
     AUTH_SERVER_ADDRESS = "localhost"
     AUTH_SERVER_PORT_NUMBER = 20202
+
