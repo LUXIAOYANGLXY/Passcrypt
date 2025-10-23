@@ -100,9 +100,6 @@ def main(run_time):
             random_bytes = bytes([rand.randint(0, 255) for _ in range(10)])
             user_id = f"username{binascii.hexlify(random_bytes).decode('utf-8')}"
             passphrase = f"passphrase{binascii.hexlify(random_bytes).decode('utf-8')}"
-            # desired_length = 40
-            # chars = string.ascii_letters + string.digits + "!@#$%^&*"
-            # passphrase = ''.join(random.choice(chars) for _ in range(desired_length))
             print(f"1用户名：{user_id}，密码：{passphrase}")
             protocol.user_time_client.setdefault(user_id, {})  # 初始化时间字典
             protocol.communication_scale.setdefault(user_id, {})  # 初始化通信量字典
@@ -115,8 +112,6 @@ def main(run_time):
 
             client_run_dec(protocol, dec_dest_path,k1,inter_path,k3,run_time,user_id, passphrase,bucket_name)#aEKE+解密+下载
 
-            # measure_file_upload_download(protocol,source_file_path,user_id,run_time,bucket_name)
-
             print("[CLIENT] 运行时间：",protocol.user_time_client[user_id])
             print("[CLIENT] 通信量：", protocol.communication_scale[user_id])
             for key in metrics_total:
@@ -124,19 +119,11 @@ def main(run_time):
                     metrics_total[key] += protocol.user_time_client[user_id][key]
                 else:
                     print(f"[CLIENT] ⚠️ Warning: 第{i + 1}次测试未记录指标 {key}")
-            # for key in total_communication_scale:
-            #     if key in protocol.communication_scale[user_id]:
-            #         total_communication_scale[key] += protocol.communication_scale[user_id][key]
-            #     else:
-            #         print(f"⚠️ Warning: 第{i + 1}次测试未记录通信量 {key}")
 
         print("\n======== 📊 平均耗时统计（单位：ms）========")
         for key in metrics_total:
             avg_time = metrics_total[key] / 10
             print(f"{key}: {avg_time:.2f} ms")
-        # for key in total_communication_scale:
-        #     avg_scale = total_communication_scale[key] / 10
-        #     print(f"{key}: {avg_scale:.2f} bytes")
 
     elif role == Constants.SERVER:
         print("[SERVER] 运行 Server")
@@ -188,8 +175,6 @@ def main(run_time):
                         elif request['type'] ==2:
                             print("\n[SERVER] 与客户端运行解密操作...\n")
                             server_run_dec(protocol, SERVER_ID, bucket_name, k0, run_time,conn,server_aeke_path,k6,run_scale)
-                        # elif request['type'] ==3:
-                        #     start_file_echo_server(protocol,bucket_name,conn)
                         for key in metrics_total:
                             if key in run_scale:
                                 metrics_total[key] += run_scale[key]
@@ -214,3 +199,4 @@ def main(run_time):
 if __name__ == "__main__":
     run_time = {}
     main(run_time)
+
