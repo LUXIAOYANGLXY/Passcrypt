@@ -94,20 +94,6 @@ def UEnc(protocol, m_path, pw, B, a,inter_path1,k5, iv_unused=None):
     return c_path, v
 
 
-# def UDec(protocol, pw, c_path, v, B, a, iv,dest_path,k1):
-#     pw_hash = protocol.H(pw)
-#     a_pw = (a * int.from_bytes(pw_hash, 'big')) % protocol.P
-#     B_pw = pow(B, a_pw, protocol.P)
-#     hash_input = str(B_pw) + pw + str(B)
-#
-#     u1 = protocol.H_double_prime(hash_input.encode())  # 直接用返回值（bytes）
-#     print("【DEBUG】u1", u1.hex())
-#
-#     k = protocol.AES_decrypt(u1, v)
-#     m_path = protocol.AES_decrypt_streaming(int.from_bytes(k, 'big'), c_path,dest_path,k1)
-#     print("mmmmmmmm")
-#     return m_path
-
 def UDec_from_stream(protocol, pw, ciphertext_stream, v, B, a, dest_path, k1):
     pw_hash = protocol.H(pw)
     a_pw = (a * int.from_bytes(pw_hash, 'big')) % protocol.P
@@ -155,4 +141,5 @@ def download_file_from_ec2(remote_path, local_path, hostname, username, pem_path
     sftp = ssh.open_sftp()
     sftp.get(remote_path, local_path)  # 从 EC2 下载文件
     sftp.close()
+
     ssh.close()
