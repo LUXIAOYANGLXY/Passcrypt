@@ -44,10 +44,6 @@ def PAE_enc(protocol, uid, pw, pk, st, m_path, inter_path1,k5):
     c0 = protocol.AES_encrypt(u0, k.to_bytes(32, 'big'))
 
     c_path = protocol.AES_encrypt_streaming(k, m_path, inter_path1, k5)
-
-    # ciphertext_stream = BytesIO()
-    # protocol.AES_encrypt_streaming_to_stream(k, m_path, ciphertext_stream, k5)
-    # ciphertext_stream.seek(0)
     return c_path, c0, u
 
 def PAE_dec(protocol, uid, pw, u_sk,  dest_path,k1, st, ciphertext_stream, c0):
@@ -93,4 +89,5 @@ if __name__ == "__main__":
     ciphertext_stream, c0, u = PAE_enc(protocol, uid, pw,  pk, st, m_path,inter_path1, k5)
     # print(f"Ciphertext Stream: {ciphertext_stream.getvalue()[:64]}...")  # Print first 64 bytes for brevity
     u_sk = pow(u, sk, protocol.P)   # Example user secret key derived from u and sk
+
     decrypted_stream = PAE_dec(protocol, uid, pw, u_sk, dec_path,k5, st, ciphertext_stream, c0)
