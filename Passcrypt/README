@@ -27,16 +27,16 @@ Please refer to https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types
 Credential information must be configured by yourself in the config.properties file.
 
 ***Test Datasets***
-The test data consists of binary files ranging from 1MB to 700MB.
+The test data consists of binary files ranging from 1MB to 400MB.
 Command to generate test datasets:
 Open a terminal and use the following command to generate an nMB file: fsutil file createnew 1nmb 1048576n
 
 ***Execution***
 Python [main] [server]
 Terminal 1: python main.py server
-Python [main] [client] [source file path]
-Terminal 2: python main.py client \DataFile\1mb
+Python [main] [client] [source file path] [security level] 
+Terminal 2: python main.py client \DataFile\1mb  1
 
 ***Testing Instructions***
-Generate binary files ranging from 1MB to 700MB, execute the code, and record data such as code execution time.
+Generate binary files ranging from 1MB to 400MB, execute the code, and record data such as code execution time.
 
