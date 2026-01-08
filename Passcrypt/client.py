@@ -44,7 +44,7 @@ def client_get_st(protocol: AEKEProtocol,st_rec,eta,uid,k,secure_level):
 
 
 def client_run_register(protocol,uid, pw,run_time,secure_level,eta=0, k=0):
-    HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
+    HOST = '54.250.xxx.xx'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.connect((HOST, PORT))
@@ -118,7 +118,7 @@ def client_run_register(protocol,uid, pw,run_time,secure_level,eta=0, k=0):
 
 def client_run_enc1(protocol: AEKEProtocol, source_file_path,run_time,uid, pw_input,inter_path1,k44,bucket_name,secure_level):    #TODO
     print("###############客户端请求与server建立socket连接###############")
-    HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
+    HOST = '54.250.xxx.xx'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
     total_bytes = 0
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s: #创建一个TCP套接字对象s，用于与服务器进行通信，AF_INET 表示 IPv4 地址族，SOCK_STREAM 表示 TCP 协议
@@ -209,7 +209,7 @@ def client_run_enc1(protocol: AEKEProtocol, source_file_path,run_time,uid, pw_in
 
 #客户端请求解密
 def client_run_dec1(protocol: AEKEProtocol, dest_path:str,k1:str,run_time:dict,uid: str, pw_input: str,bucketname:str,secure_level,c_path):
-    HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
+    HOST = '54.250.xxx.xx'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
     total_bytes =0
     with (socket.socket(socket.AF_INET,
@@ -344,7 +344,7 @@ def client_run_dec1(protocol: AEKEProtocol, dest_path:str,k1:str,run_time:dict,u
 
 def client_run_enc2(protocol: AEKEProtocol, source_file_path,run_time,uid, pw_input,inter_path1,k44,bucket_name,secure_level):    #TODO
     print("###############客户端请求与server建立socket连接###############")
-    HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
+    HOST = '54.250.xxx.xx'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
     total_bytes = 0
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s: #创建一个TCP套接字对象s，用于与服务器进行通信，AF_INET 表示 IPv4 地址族，SOCK_STREAM 表示 TCP 协议
@@ -444,7 +444,7 @@ def client_run_enc2(protocol: AEKEProtocol, source_file_path,run_time,uid, pw_in
 
 #客户端请求解密
 def client_run_dec2(protocol: AEKEProtocol, dest_path:str,k1:str,run_time:dict,uid: str, pw_input: str,bucketname:str,secure_level,c_path):
-    HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
+    HOST = '54.250.xxx.xx'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
     total_bytes =0
     with (socket.socket(socket.AF_INET,
@@ -587,7 +587,7 @@ def client_run_dec2(protocol: AEKEProtocol, dest_path:str,k1:str,run_time:dict,u
 
 def client_run_enc3_PAKE(protocol: AEKEProtocol, run_time,uid, pw_input,secure_level,eta=0,k=0):    #TODO
     print("###############客户端请求与server建立安全信道###############")
-    HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
+    HOST = '54.250.xxx.xx'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
     total_bytes = 0
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -745,7 +745,7 @@ def client_run_enc3(protocol: AEKEProtocol, s,source_file_path,run_time,uid, pw_
 
 #客户端请求解密
 def client_run_dec3_PAKE(protocol: AEKEProtocol, run_time:dict,uid: str, pw_input: str,secure_level,eta=0,k=0):
-    HOST = '54.250.191.84'  # The server's hostname or IP address客户端将连接本地运行的服务器
+    HOST = '54.250.xxx.xx'  # The server's hostname or IP address客户端将连接本地运行的服务器
     PORT = 5202  # The port used by the server客户端与服务器通信的端口
     total_bytes =0
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1492,6 +1492,7 @@ def measure_file_upload_download(protocol:AEKEProtocol, file_path: str, uid:str,
         print(f"[CLIENT] client_retrieve_plain_time 耗时: {client_retrieve_plain_time:.2f} ms")
         protocol.user_time_client[uid]["client_retrieve_plain_time"] = client_retrieve_plain_time
         run_time["client_retrieve_plain_time"] = client_retrieve_plain_time
+
 
 
 
