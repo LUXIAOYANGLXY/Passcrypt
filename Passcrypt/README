@@ -40,3 +40,8 @@ Terminal 2: python main.py client \DataFile\1mb  1
 ***Testing Instructions***
 Generate binary files ranging from 1MB to 400MB, execute the code, and record data such as code execution time.
 
+***PAE-TEST***
+Conduct performance testing of PAE locally.
+Measure the execution time of each phase of PAE with different file sizes by running the command: python PAE_test.py.
+Measure the execution time of each phase of the PAE protocol with different password lengths by running the command: python PAE_test_pw.py.
+
