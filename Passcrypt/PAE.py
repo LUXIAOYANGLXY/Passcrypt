@@ -2,7 +2,7 @@ import configparser
 import gzip
 import hashlib
 import os
-import secrets  #用于生成安全的随机数
+import secrets  
 import shutil
 import struct
 
@@ -15,11 +15,6 @@ import time
 from boto3.s3.transfer import TransferConfig
 import paramiko
 from io import BytesIO
-
-
-
-
-
 
 
 
@@ -126,9 +121,6 @@ def PAE_dec1(protocol, uid, pw, u_sk,  dest_path,k1,  ciphertext_stream, c0):
 
 
 
-
-
-
 if __name__ == "__main__":
     # Example usage
     # 从 config.properties 加载配置
@@ -154,4 +146,5 @@ if __name__ == "__main__":
     ciphertext_stream, c0, u = PAE_enc(protocol, uid, pw,  pk, st, m_path,inter_path1, k5)
     # print(f"Ciphertext Stream: {ciphertext_stream.getvalue()[:64]}...")  # Print first 64 bytes for brevity
     u_sk = pow(u, sk, protocol.P)   # Example user secret key derived from u and sk
+
     decrypted_stream = PAE_dec(protocol, uid, pw, u_sk, dec_path,k5, st, ciphertext_stream, c0)
