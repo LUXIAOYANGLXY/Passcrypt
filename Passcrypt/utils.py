@@ -22,27 +22,6 @@ def recv_with_length(sock):
     return pickle.loads(data),4+msglen
 
 
-
-# def recv_with_length(sock):
-#     # 接收长度字段（4 字节）
-#     raw_msglen = sock.recv(4)
-#     if not raw_msglen:
-#         raise ConnectionError("连接已关闭，未能接收数据长度")
-#
-#     msglen = struct.unpack('>I', raw_msglen)[0]
-#
-#     data = b''
-#     while len(data) < msglen:
-#         packet = sock.recv(msglen - len(data))
-#         if not packet:
-#             raise ConnectionError("连接中断，数据接收不完整")
-#         data += packet
-#
-#     obj = pickle.loads(data)
-#     return obj, 4 + msglen
-
-
-
 def send_with_length(sock, obj):
     data = pickle.dumps(obj)
     length = len(data).to_bytes(4, 'big')
@@ -90,7 +69,6 @@ def UEnc_to_stream(protocol, m_path, pw, B, a, k5):
 
     # --- Step 4: 用 u 加密对称密钥 k（32字节）生成密文 v ---
     v = protocol.AES_encrypt(u, k.to_bytes(32, 'big'))
-
     return ciphertext_stream, v
 
 
@@ -116,19 +94,7 @@ def UEnc(protocol, m_path, pw, B, a,inter_path1,k5, iv_unused=None):
     return c_path, v
 
 
-# def UDec(protocol, pw, c_path, v, B, a, iv,dest_path,k1):
-#     pw_hash = protocol.H(pw)
-#     a_pw = (a * int.from_bytes(pw_hash, 'big')) % protocol.P
-#     B_pw = pow(B, a_pw, protocol.P)
-#     hash_input = str(B_pw) + pw + str(B)
-#
-#     u1 = protocol.H_double_prime(hash_input.encode())  # 直接用返回值（bytes）
-#     print("【DEBUG】u1", u1.hex())
-#
-#     k = protocol.AES_decrypt(u1, v)
-#     m_path = protocol.AES_decrypt_streaming(int.from_bytes(k, 'big'), c_path,dest_path,k1)
-#     print("mmmmmmmm")
-#     return m_path
+
 
 def UDec_from_stream(protocol, pw, ciphertext_stream, v, B, a, dest_path, k1):
     pw_hash = protocol.H(pw)
@@ -177,4 +143,5 @@ def download_file_from_ec2(remote_path, local_path, hostname, username, pem_path
     sftp = ssh.open_sftp()
     sftp.get(remote_path, local_path)  # 从 EC2 下载文件
     sftp.close()
+
     ssh.close()
