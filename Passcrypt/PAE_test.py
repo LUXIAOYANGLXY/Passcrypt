@@ -35,8 +35,6 @@ def PAE_ext(protocol, uid, pw, st):
     a_bytes = protocol.H_new(uid, pw, st)
     return int.from_bytes(a_bytes, 'big')  # 转换为整数返回
 
-
-
 def PAE_enc(protocol, uid, pw, pk, st, m_path, inter_path1,k5):
     start_time = time.time()
     a = PAE_ext(protocol, uid, pw, st)
@@ -78,9 +76,7 @@ def PAE_dec(protocol, uid, pw, u_sk,  dest_path,k1, st, ciphertext_stream, c0):
     print("val",val_bytes)
     print("u1",u1.hex())
     k = int.from_bytes(protocol.AES_decrypt(u1, c0), 'big')
-
     m_path = protocol.AES_decrypt_streaming_from_stream(k, ciphertext_stream, dest_path, k1)
-
     return m_path
 
 if __name__ == "__main__":
@@ -131,4 +127,5 @@ if __name__ == "__main__":
     print("\n======== 📊 平均耗时统计（单位：ms）========")
     for key in metrics_total:
         avg_time = metrics_total[key] / 5
+
         print(f"{key}: {avg_time:.2f} ms")
