@@ -97,10 +97,6 @@ def main(run_time):
             "client_enc_PAKE_bytes": 0,
             "client_dec_PAKE_bytes": 0
         }
-        # total_communication_scale ={
-        #     "send_bytes": 0,
-        #     "recv_bytes": 0
-        # }
         for i in range(10):
             print(f"\n=========== 第 {i + 1} 次测试 ===========")
             protocol = AEKEProtocol(region_name,access_key_id,secret_key_id,key_len=24,sec_level=2048, verbose=True)
@@ -136,12 +132,6 @@ def main(run_time):
                 c_path = client_run_enc3(protocol,s, source_file_path,run_time,user_id, passphrase,inter_enc_path,k4,bucket_name,k_client, st,total_bytes,secure_level)##PAKE+加密+上传   2222
                 k_client, st, s,total_bytes = client_run_dec3_PAKE(protocol, run_time, user_id, passphrase,secure_level)
                 client_run_dec3(protocol,s, dec_dest_path,k1,run_time,user_id, passphrase,bucket_name,k_client, st,total_bytes,c_path,secure_level)#PAKE+解密+下载
-            # elif secure_level == 4:
-            #     client_run_register(protocol, user_id, passphrase, run_time,secure_level,eta,k)
-            #     k_client,st,s,total_bytes=client_run_enc3_PAKE(protocol, run_time, user_id, passphrase,secure_level, eta, k)
-            #     c_path = client_run_enc3(protocol,s, source_file_path, run_time, user_id, passphrase, inter_enc_path, k4,bucket_name,k_client,st,total_bytes)  ##PAEK+加密+上传
-            #     k_client, st, s,total_bytes = client_run_dec3_PAKE(protocol, run_time, user_id, passphrase, secure_level,eta, k)
-            #     client_run_dec3(protocol, s,dec_dest_path, k1, run_time, user_id, passphrase, bucket_name,k_client,st,total_bytes,c_path)  # 解密+下载
             else :
                 print("[Client]:错误的安全等级")
 
@@ -241,22 +231,6 @@ def main(run_time):
                                 print("\n[SERVER] 与客户端运行解密操作...\n")
                                 k_server, uid = server_run_dec3_PAKE(protocol, run_time, conn, run_scale,secure_level)
                                 server_run_dec3(protocol, run_time,conn,run_scale,k_server,uid)
-                        elif secure_level == 4:
-                            if type == 'reg':
-                                print("\n[SERVER] 等待客户端连接...\n")
-                                server_run_register(protocol, conn, run_time, run_scale,secure_level)
-
-                            elif type == 'enc':
-                                print("\n[SERVER] 与客户端运行加密操作...\n")
-
-                                k_server,uid=server_run_enc3_PAKE(protocol, run_time, conn, run_scale,secure_level)
-                                server_run_enc3(protocol, bucket_name, run_time, conn, run_scale,k_server,uid)
-
-                            elif type == 'dec':
-                                print("\n[SERVER] 与客户端运行解密操作...\n")
-                                k_server, uid = server_run_dec3_PAKE(protocol, run_time, conn, run_scale,secure_level)
-                                server_run_dec3(protocol, run_time, conn, run_scale,k_server,uid)
-
                         for key in metrics_total:
                             if key in run_scale:
                                 metrics_total[key] += run_scale[key]
@@ -281,3 +255,4 @@ def main(run_time):
 if __name__ == "__main__":
     run_time = {}
     main(run_time)
+
