@@ -12,28 +12,12 @@ from Crypto.Util import number
 class AEKEProtocol:
     def __init__(self, region_name,access_key_id,secret_key_id,p=None, g=None, key_len=24, sec_level=2048,verbose=True): # 初始化方法
         self.P = p or 0xFFFFFFFEFFFFEE37
-        # # if p is None:
-        # #     self.P = number.getPrime(sec_level)
-        # # else:
-        # #     self.P = p
-        # Q = number.getPrime(256)
-        # P = 2 * Q + 1
-        # while not number.isPrime(P):
-        #     Q = number.getPrime(256)
-        #     P = 2 * Q + 1
-        # self.P = P
         self.G = g or 2
-        # self.Q = Q  # ⚠️ 指数群阶
-        # 2️⃣ 私钥必须在指数群
-        # self.sk = secrets.randbelow(self.Q - 1) + 1
-        # self.pk = pow(self.G, self.sk, self.P)
         self.KEY_LEN = key_len
         self.verbose = verbose
         self.user_db = {}   # 模拟数据库,用户注册信息的存储
         self.sk = secrets.randbelow(self.P)
         self.pk = pow(self.G, self.sk, self.P)
-
-
 
         self.uid_list = []  # 用户列表
         self.user_time = {}  # 用户时间戳
@@ -67,12 +51,6 @@ class AEKEProtocol:
         return (SHA256.new(data + b'0').digest()[:self.KEY_LEN] +
                 SHA256.new(data + b'1').digest()[:self.KEY_LEN] )
 
-    # # ==== 哈希函数模拟 ====
-    # def H(self, *args):  # H函数，输出72字节
-    #     data = b''.join(str(arg).encode() for arg in args)
-    #     return (SHA256.new(data + b'0').digest()[:self.KEY_LEN] +
-    #             SHA256.new(data + b'1').digest()[:self.KEY_LEN] +
-    #             SHA256.new(data + b'2').digest()[:self.KEY_LEN])
 
     def H_prime(self, *args):  
         data = b''.join(str(arg).encode() for arg in args) #将args中的字符串拼接
@@ -533,3 +511,4 @@ class AEKEProtocol:
                 raise
 
         return dec_file_path
+
