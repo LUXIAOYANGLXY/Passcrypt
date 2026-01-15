@@ -17,8 +17,6 @@ import paramiko
 from io import BytesIO
 
 
-
-
 def PAE_kgen(protocol, uid, pw):
     sk = secrets.randbelow(protocol.P)
     pk = pow(protocol.G, sk, protocol.P)
@@ -27,8 +25,6 @@ def PAE_kgen(protocol, uid, pw):
 def PAE_ext(protocol, uid, pw, st):
     a_bytes = protocol.H_new(uid, pw, st)
     return int.from_bytes(a_bytes, 'big')  # 转换为整数返回
-
-
 
 def PAE_enc(protocol, uid, pw, pk, st, m_path, inter_path1,k5,header):
     a = PAE_ext(protocol, uid, pw, st)
@@ -69,16 +65,12 @@ def PAE_dec(protocol, uid, pw, u_sk,  dest_path,k1, st, ciphertext_stream, c0,he
     k = int.from_bytes(protocol.AES_decrypt_h(u1, c0,header), 'big')
 
     m_path = protocol.AES_decrypt_streaming_from_stream(k, ciphertext_stream, dest_path, k1)
-
     return m_path
-
 
 
 def PAE_ext1(protocol, uid, pw):
     a_bytes = protocol.H_new(uid, pw)
     return int.from_bytes(a_bytes, 'big')  # 转换为整数返回
-
-
 
 def PAE_enc1(protocol, uid, pw, pk,  m_path, inter_path1,k5):
     a = PAE_ext1(protocol, uid, pw)
@@ -117,14 +109,8 @@ def PAE_dec1(protocol, uid, pw, u_sk,  dest_path,k1,  ciphertext_stream, c0):
     print("val", val_bytes)
     print("u1", u1.hex())
     k = int.from_bytes(protocol.AES_decrypt(u1, c0), 'big')
-
     m_path = protocol.AES_decrypt_streaming_from_stream(k, ciphertext_stream, dest_path, k1)
-
     return m_path
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -154,3 +140,4 @@ if __name__ == "__main__":
     u_sk = pow(u, sk, protocol.P)   # Example user secret key derived from u and sk
 
     decrypted_stream = PAE_dec(protocol, uid, pw, u_sk, dec_path,k5, st, ciphertext_stream, c0)
+
