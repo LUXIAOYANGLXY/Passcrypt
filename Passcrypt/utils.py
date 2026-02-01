@@ -5,7 +5,8 @@ import struct
 from io import BytesIO
 import boto3
 import paramiko
-
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.backends import default_backend
 
 def recv_with_length(sock):
     # 先接收前4个字节，表示后续数据长度
@@ -20,6 +21,7 @@ def recv_with_length(sock):
             return None
         data += packet
     return pickle.loads(data),4+msglen
+
 
 
 def send_with_length(sock, obj):
@@ -51,65 +53,77 @@ def recv_bytes_with_length(sock):
 
 def UEnc_to_stream(protocol, m_path, pw, B, a, k5):
     # 生成随机对称密钥 k（整数），用于加密明文
-    k = secrets.randbelow(protocol.P)
+    k_scalar = secrets.randbelow(protocol.N)
+    k_bytes = k_scalar.to_bytes(32, 'big')
 
     # --- Step 1: 将明文加密为 ciphertext_stream ---
     ciphertext_stream = BytesIO()
-    protocol.AES_encrypt_streaming_to_stream(k, m_path, ciphertext_stream, k5)
-    ciphertext_stream.seek(0)  # 重置指针以供后续读取
+    protocol.AES_encrypt_streaming_to_stream(k_bytes, m_path, ciphertext_stream, k5)
+    ciphertext_stream.seek(0)  
 
     # --- Step 2: 使用 H(pw) 和 a, B 生成共享密钥 B_pw ---
     pw_hash = protocol.H(pw)
-    a_pw = (a * int.from_bytes(pw_hash, 'big')) % protocol.P
-    B_pw = pow(B, a_pw, protocol.P)
+    a_pw_scalar = (a * int.from_bytes(pw_hash, 'big')) % protocol.N
+    a_pw_priv_obj = ec.derive_private_key(a_pw_scalar, protocol.ec_curve, default_backend())
+    # 执行 ECDH exchange 得到共享秘密字节流
+    shared_secret = a_pw_priv_obj.exchange(ec.ECDH(), B)
 
-    # --- Step 3: 计算共享对称密钥 u1（H''） ---
-    hash_input = str(B_pw) + pw + str(B)
-    u = protocol.H_double_prime(hash_input.encode())  # bytes
+    # --- Step 4: 计算 H'' 生成对称掩码 u ---
+    B_bytes = protocol.serialize_pubkey(B)
+    hash_input = shared_secret + pw.encode() + B_bytes
+    u = protocol.H_double_prime(hash_input)
 
     # --- Step 4: 用 u 加密对称密钥 k（32字节）生成密文 v ---
-    v = protocol.AES_encrypt(u, k.to_bytes(32, 'big'))
+    v = protocol.AES_encrypt(u, k_bytes)
+
     return ciphertext_stream, v
 
 
 def UEnc(protocol, m_path, pw, B, a,inter_path1,k5, iv_unused=None):
 
     # 生成随机对称密钥 k（整数），用于加密明文
-    k = secrets.randbelow(protocol.P)
+    k_scalar = secrets.randbelow(protocol.N)
+    k_bytes = k_scalar.to_bytes(32, 'big')
 
-    c_path = protocol.AES_encrypt_streaming(k, m_path,inter_path1,k5)
+    c_path = protocol.AES_encrypt_streaming(k_bytes, m_path,inter_path1,k5)
 
     # 口令哈希并混合私钥生成共享密码
     pw_hash = protocol.H(pw)
-    a_pw = (a * int.from_bytes(pw_hash, 'big')) % protocol.P
-    B_pw = pow(B, a_pw, protocol.P)
+    a_pw_scalar = (a* int.from_bytes(pw_hash, 'big')) % protocol.N
+    a_pw_priv = ec.derive_private_key(a_pw_scalar, protocol.ec_curve, default_backend())
+    shared_secret = a_pw_priv.exchange(ec.ECDH(), B)
+    B_bytes = protocol.serialize_pubkey(B)
+    # B_pw = pow(B, a_pw, protocol.P)
 
     # 计算 H''，生成对称密钥 u
-    hash_input = str(B_pw) + pw + str(B)
-    u = protocol.H_double_prime(hash_input.encode())  # 输出为 bytes
+    hash_input = shared_secret + pw.encode() + B_bytes
+    # hash_input = str(B_pw) + pw + str(B)
+    # u = protocol.H_double_prime(hash_input.encode())  # 输出为 bytes
+    u = protocol.H_double_prime(hash_input)
 
     # 用 u 加密 k（转为 32 字节），返回 AES-GCM 格式密文
-    v = protocol.AES_encrypt(u, k.to_bytes(32, 'big'))
+    v = protocol.AES_encrypt(u, k_bytes)
 
     return c_path, v
 
 
-
-
 def UDec_from_stream(protocol, pw, ciphertext_stream, v, B, a, dest_path, k1):
     pw_hash = protocol.H(pw)
-    a_pw = (a * int.from_bytes(pw_hash, 'big')) % protocol.P
-    B_pw = pow(B, a_pw, protocol.P)
-    hash_input = str(B_pw) + pw + str(B)
+    a_pw_scalar = (a * int.from_bytes(pw_hash, 'big')) % protocol.N
+    a_pw_priv = ec.derive_private_key(a_pw_scalar, protocol.ec_curve, default_backend())
+    shared_secret = a_pw_priv.exchange(ec.ECDH(), B)
 
-    u1 = protocol.H_double_prime(hash_input.encode())
+    # 2. 重构哈希输入
+    B_bytes = protocol.serialize_pubkey(B)
+    hash_input = shared_secret + pw.encode() + B_bytes
+    u1 = protocol.H_double_prime(hash_input)
     print("【DEBUG】u1", u1.hex())
-
     k = protocol.AES_decrypt(u1, v)
 
-    # 修改为从内存流解密：
     m_path = protocol.AES_decrypt_streaming_from_stream(int.from_bytes(k, 'big'), ciphertext_stream, dest_path, k1)
     return m_path
+
+
 
 
 def connect_and_get_socket(address: str, port: int) -> socket.socket:
@@ -143,5 +157,5 @@ def download_file_from_ec2(remote_path, local_path, hostname, username, pem_path
     sftp = ssh.open_sftp()
     sftp.get(remote_path, local_path)  # 从 EC2 下载文件
     sftp.close()
-
     ssh.close()
+
