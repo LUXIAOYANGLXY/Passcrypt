@@ -1,53 +1,42 @@
 import configparser
-import gzip
-import hashlib
-import os
-import secrets  
-import shutil
-import struct
-
-import boto3
-
+import secrets  #用于生成安全的随机数
 from aEKE import AEKEProtocol
-import socket
-import pickle
-import time
-from boto3.s3.transfer import TransferConfig
-import paramiko
-from io import BytesIO
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.backends import default_backend
 
 
 
 def PAE_kgen(protocol, uid, pw):
-    sk = secrets.randbelow(protocol.P)
-    pk = pow(protocol.G, sk, protocol.P)
+    #生成 ECC 密钥对
+    sk = secrets.randbelow(protocol.N)
+    pk = ec.derive_private_key(sk, protocol.ec_curve, default_backend()).public_key()
     return sk,pk
 
 def PAE_ext(protocol, uid, pw, st):
-    a_bytes = protocol.H_new(uid, pw, st)
-    return int.from_bytes(a_bytes, 'big')  # 转换为整数返回
-
-
+    st_bytes = st if isinstance(st, bytes) else protocol.serialize_pubkey(st)
+    a_bytes = protocol.H_new(uid, pw, st_bytes)
+    return int.from_bytes(a_bytes, 'big') % protocol.N
 
 def PAE_enc(protocol, uid, pw, pk, st, m_path, inter_path1,k5,header):
     a = PAE_ext(protocol, uid, pw, st)
     print("enc_a:", a)
-    r = secrets.randbelow(protocol.P)
-    u = pow(protocol.G, r, protocol.P)
-    val = (a % protocol.P) * pow(pk, r, protocol.P) % protocol.P
-    print("val:", val)
-    val_bytes = val.to_bytes((val.bit_length() + 7) // 8, 'big')
-    print("enc_val:", val_bytes)
-    u0 = protocol.H_double_prime(uid, val_bytes)
-    print("uid", uid)
-    print("val",val_bytes)
+    r = secrets.randbelow(protocol.N)
+    # u = r * G (点)
+    r_priv = ec.derive_private_key(r, protocol.ec_curve, default_backend())
+    u = r_priv.public_key()
 
-    k = secrets.randbelow(protocol.P)
+    # 计算 val = a * (r * pk)
+    r_pk_bytes  = r_priv.exchange(ec.ECDH(), pk)
+    val_material = a.to_bytes(32, 'big') + r_pk_bytes
+    u0 = protocol.H_double_prime(uid, val_material)
+    # 对称加密密钥 k
+    k_scalar = secrets.randbelow(protocol.N)
+    k_raw_bytes = k_scalar.to_bytes(32, 'big')
+    print("enc_k_raw:", k_raw_bytes.hex())
     print("u0:", u0.hex())
-    c0 = protocol.AES_CTR_encrypt(u0, k.to_bytes(32, 'big'))
+    c0 = protocol.AES_CTR_encrypt(u0, k_raw_bytes)
 
-    c_path = protocol.AES_encrypt_streaming_h(k, m_path, inter_path1, k5,header)
-
+    c_path = protocol.AES_encrypt_streaming_h(k_raw_bytes, m_path, inter_path1, k5,header)
     # ciphertext_stream = BytesIO()
     # protocol.AES_encrypt_streaming_to_stream(k, m_path, ciphertext_stream, k5)
     # ciphertext_stream.seek(0)
@@ -56,73 +45,65 @@ def PAE_enc(protocol, uid, pw, pk, st, m_path, inter_path1,k5,header):
 def PAE_dec(protocol, uid, pw, u_sk,  dest_path,k1, st, ciphertext_stream, c0,header):
     a = PAE_ext(protocol, uid, pw, st)
     print("dec_a:", a)
-    u_prime = ((a % protocol.P) * u_sk) % protocol.P
-    print("u_prime:", u_prime)
-    print("dec_prime:", u_prime)
-    val_bytes = u_prime.to_bytes((u_prime.bit_length() + 7) // 8, 'big')
-    print("dec_val_bytes:", val_bytes)
-    u1 = protocol.H_double_prime(uid, val_bytes)
-    print("uid", uid)
-    print("val",val_bytes)
-    print("u1",u1.hex())
-    k = int.from_bytes(protocol.AES_CTR_decrypt(u1, c0), 'big')
-    m_path = protocol.AES_decrypt_streaming_from_stream_h(k, ciphertext_stream, dest_path, k1,header)
+    u_sk_bytes = u_sk if isinstance(u_sk, bytes) else u_sk.to_bytes(32, 'big')
+    val_material = a.to_bytes(32, 'big') + u_sk_bytes
+    u1 = protocol.H_double_prime(uid, val_material)
+
+    k_derived = protocol.AES_CTR_decrypt(u1, c0)
+    print(f"【DEBUG】Decrypted Derived Key: {k_derived.hex()}")
+
+    m_path = protocol.AES_decrypt_streaming_from_stream_h(k_derived, ciphertext_stream, dest_path, k1,header)
     return m_path
+
 
 
 
 def PAE_ext1(protocol, uid, pw):
     a_bytes = protocol.H_new(uid, pw)
-    return int.from_bytes(a_bytes, 'big')  # 转换为整数返回
+    # 对曲线阶 N 取模
+    return int.from_bytes(a_bytes, 'big') % protocol.N
 
 
 
-def PAE_enc1(protocol, uid, pw, pk,  m_path, inter_path1,k5):
+def PAE_enc1(protocol, uid, pw, pk,  m_path, inter_path1,k5,header):
     a = PAE_ext1(protocol, uid, pw)
     print("enc_a:", a)
-    r = secrets.randbelow(protocol.P)
-    u = pow(protocol.G, r, protocol.P)
-    val = (a % protocol.P) * pow(pk, r, protocol.P) % protocol.P
-    print("val:", val)
-    val_bytes = val.to_bytes((val.bit_length() + 7) // 8, 'big')
-    print("enc_val:", val_bytes)
-    u0 = protocol.H_double_prime(uid, val_bytes)
-    print("uid", uid)
-    print("val", val_bytes)
+    r = secrets.randbelow(protocol.N)
+    r_priv = ec.derive_private_key(r, protocol.ec_curve, default_backend())
+    u = r_priv.public_key()
+    r_pk_bytes = r_priv.exchange(ec.ECDH(), pk)
+    val_material = a.to_bytes(32, 'big') + r_pk_bytes
+    u0 = protocol.H_double_prime(uid, val_material)
 
-    k = secrets.randbelow(protocol.P)
+    k = secrets.randbelow(protocol.N)
+    k_raw_bytes = k.to_bytes(32, 'big')
     print("u0:", u0.hex())
-    c0 = protocol.AES_encrypt(u0, k.to_bytes(32, 'big'))
+    c0 = protocol.AES_encrypt_h(u0, k_raw_bytes, header)
 
-    c_path = protocol.AES_encrypt_streaming(k, m_path, inter_path1, k5)
+    c_path = protocol.AES_encrypt_streaming(k_raw_bytes, m_path, inter_path1, k5)
 
     # ciphertext_stream = BytesIO()
     # protocol.AES_encrypt_streaming_to_stream(k, m_path, ciphertext_stream, k5)
     # ciphertext_stream.seek(0)
     return c_path, c0, u
 
-def PAE_dec1(protocol, uid, pw, u_sk,  dest_path,k1,  ciphertext_stream, c0):
+def PAE_dec1(protocol, uid, pw, u_sk,  dest_path,k1,  ciphertext_stream, c0,header):
     a = PAE_ext1(protocol, uid, pw)
     print("dec_a:", a)
-    u_prime = ((a % protocol.P) * u_sk) % protocol.P
-    print("u_prime:", u_prime)
-    print("dec_prime:", u_prime)
-    val_bytes = u_prime.to_bytes((u_prime.bit_length() + 7) // 8, 'big')
-    print("dec_val_bytes:", val_bytes)
-    u1 = protocol.H_double_prime(uid, val_bytes)
-    print("uid", uid)
-    print("val", val_bytes)
-    print("u1", u1.hex())
-    k = int.from_bytes(protocol.AES_decrypt(u1, c0), 'big')
+    # val_material = a * (sk * u)
+    u_sk_bytes = u_sk if isinstance(u_sk, bytes) else u_sk.to_bytes(32, 'big')
+    val_material = a.to_bytes(32, 'big') + u_sk_bytes
 
-    m_path = protocol.AES_decrypt_streaming_from_stream(k, ciphertext_stream, dest_path, k1)
+    u1 = protocol.H_double_prime(uid, val_material)
+    k_derived = protocol.AES_decrypt_h(u1, c0, header)
+
+    m_path = protocol.AES_decrypt_streaming_from_stream(k_derived, ciphertext_stream, dest_path, k1)
 
     return m_path
 
 
 
 if __name__ == "__main__":
-    # Example usage
     # 从 config.properties 加载配置
     config = configparser.ConfigParser()
     with open("config.properties", "r", encoding="utf-8") as f:
@@ -138,13 +119,21 @@ if __name__ == "__main__":
     k1 = f"decrypted_data"
     dec_path = "./dec_file/"
     inter_path1 = "./inter_file/"
+    secure_level = 1
+    MSG_TYPE_KEY = 22
+    header = (
+            uid.encode() +
+            secure_level.to_bytes(1, "big") +
+            MSG_TYPE_KEY.to_bytes(1, "big")
+    )
 
     sk,pk = PAE_kgen(protocol, uid, pw)
     st = secrets.token_bytes(16)  # Example session token
     m_path = "./1mb"  # Path to the file to be encrypted
     k5 = "c1_path_111"  # Example key for encryption
-    ciphertext_stream, c0, u = PAE_enc(protocol, uid, pw,  pk, st, m_path,inter_path1, k5)
-    # print(f"Ciphertext Stream: {ciphertext_stream.getvalue()[:64]}...")  # Print first 64 bytes for brevity
-    u_sk = pow(u, sk, protocol.P)   # Example user secret key derived from u and sk
+    ciphertext_stream, c0, u = PAE_enc(protocol, uid, pw,  pk, st, m_path,inter_path1, k5,header)
+    sk_priv_obj = ec.derive_private_key(sk, protocol.ec_curve, default_backend())
+    u_sk = sk_priv_obj.exchange(ec.ECDH(), u)  # 结果是 bytes
+    with open(ciphertext_stream, "rb") as f:
+        decrypted_path = PAE_dec(protocol, uid, pw, u_sk, dec_path, k1, st, f, c0, header)
 
-    decrypted_stream = PAE_dec(protocol, uid, pw, u_sk, dec_path,k5, st, ciphertext_stream, c0)
