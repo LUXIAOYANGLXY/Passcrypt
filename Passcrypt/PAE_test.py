@@ -1,20 +1,10 @@
 import configparser
-import gzip
-import os
-import secrets  #用于生成安全的随机数
-import shutil
-import struct
-
-import boto3
-
+import secrets  
 from aEKE import AEKEProtocol
-import socket
-import pickle
 import time
-from boto3.s3.transfer import TransferConfig
-import paramiko
 from io import BytesIO
-
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.backends import default_backend
 
 metrics_total = {
             "PAE_Ext_time":0,
@@ -27,60 +17,67 @@ PAE_dec_time =0
 
 
 def PAE_kgen(protocol, uid, pw):
-    sk = secrets.randbelow(protocol.P)
-    pk = pow(protocol.G, sk, protocol.P)
+    """生成 ECC 密钥对"""
+    # 随机生成私钥 sk (标量)
+    sk = secrets.randbelow(protocol.N)
+    # 计算公钥 pk = sk * G (点)
+    pk = ec.derive_private_key(sk, protocol.ec_curve, default_backend()).public_key()
     return sk,pk
 
 def PAE_ext(protocol, uid, pw, st):
-    a_bytes = protocol.H_new(uid, pw, st)
-    return int.from_bytes(a_bytes, 'big')  # 转换为整数返回
+    """导出 a (标量)"""
+    # st 如果是 bytes 则直接哈希，如果是点则先序列化
+    st_bytes = st if isinstance(st, bytes) else protocol.serialize_pubkey(st)
+    a_bytes = protocol.H_new(uid, pw, st_bytes)
+    # 对曲线阶 N 取模
+    return int.from_bytes(a_bytes, 'big') % protocol.N
 
-def PAE_enc(protocol, uid, pw, pk, st, m_path, inter_path1,k5):
+def PAE_enc(protocol, uid, pw, pk, st, m_path, inter_path1,k5,header):
     start_time = time.time()
     a = PAE_ext(protocol, uid, pw, st)
     print("enc_a:", a)
-    r = secrets.randbelow(protocol.P)
-    u = pow(protocol.G, r, protocol.P)
-    val = (a % protocol.P) * pow(pk, r, protocol.P) % protocol.P
-    print("val:", val)
-    val_bytes = val.to_bytes((val.bit_length() + 7) // 8, 'big')
-    print("enc_val:", val_bytes)
-    u0 = protocol.H_double_prime(uid, val_bytes)
-    print("uid", uid)
-    print("val",val_bytes)
+    # 随机标量 r
+    r = secrets.randbelow(protocol.N)
+    # u = r * G (点)
+    r_priv = ec.derive_private_key(r, protocol.ec_curve, default_backend())
+    u = r_priv.public_key()
 
-    k = secrets.randbelow(protocol.P)
+    # 计算 val = a * (r * pk)
+    r_pk_bytes = r_priv.exchange(ec.ECDH(), pk)
+    val_material = a.to_bytes(32, 'big') + r_pk_bytes
+    u0 = protocol.H_double_prime(uid, val_material)
+    # 对称加密密钥 k
+    k_scalar = secrets.randbelow(protocol.N)
+    k_raw_bytes = k_scalar.to_bytes(32, 'big')
+    print("enc_k_raw:", k_raw_bytes)
     print("u0:", u0.hex())
-    c0 = protocol.AES_encrypt(u0, k.to_bytes(32, 'big'))
+    c0 = protocol.AES_CTR_encrypt(u0, k_raw_bytes)
 
-    ciphertext_stream = protocol.AES_encrypt_streaming(k, m_path, inter_path1, k5)
+    c_path = protocol.AES_encrypt_streaming_h(k_raw_bytes, m_path, inter_path1, k5, header)
     end_time = time.time()
     PAE_enc_time = (end_time - start_time) * 1000
 
     print("PAE_enc_time: {:.2f} ms".format(PAE_enc_time))
     ciphertext_stream = BytesIO()
-    protocol.AES_encrypt_streaming_to_stream(k, m_path, ciphertext_stream, k5)
+    protocol.AES_encrypt_streaming_to_stream_h(k_raw_bytes, m_path, ciphertext_stream, k5, header)
     ciphertext_stream.seek(0)
     return ciphertext_stream, c0, u ,PAE_enc_time
 
-def PAE_dec(protocol, uid, pw, u_sk,  dest_path,k1, st, ciphertext_stream, c0):
+def PAE_dec(protocol, uid, pw, u_sk,  dest_path,k1, st, ciphertext_stream, c0,header):
     a = PAE_ext(protocol, uid, pw, st)
     print("dec_a:", a)
-    u_prime = ((a % protocol.P) * u_sk) % protocol.P
-    print("u_prime:", u_prime)
-    print("dec_prime:", u_prime)
-    val_bytes = u_prime.to_bytes((u_prime.bit_length() + 7) // 8, 'big')
-    print("dec_val_bytes:", val_bytes)
-    u1 = protocol.H_double_prime(uid, val_bytes)
-    print("uid", uid)
-    print("val",val_bytes)
-    print("u1",u1.hex())
-    k = int.from_bytes(protocol.AES_decrypt(u1, c0), 'big')
-    m_path = protocol.AES_decrypt_streaming_from_stream(k, ciphertext_stream, dest_path, k1)
+    # val_material = a * (sk * u)
+    u_sk_bytes = u_sk if isinstance(u_sk, bytes) else u_sk.to_bytes(32, 'big')
+    val_material = a.to_bytes(32, 'big') + u_sk_bytes
+    u1 = protocol.H_double_prime(uid, val_material)
+
+    k_derived = protocol.AES_CTR_decrypt(u1, c0)
+    print(f"【DEBUG】Decrypted Derived Key: {k_derived.hex()}")
+
+    m_path = protocol.AES_decrypt_streaming_from_stream_h(k_derived, ciphertext_stream, dest_path, k1, header)
     return m_path
 
 if __name__ == "__main__":
-    # Example usage
     # 从 config.properties 加载配置
     config = configparser.ConfigParser()
     with open("config.properties", "r", encoding="utf-8") as f:
@@ -96,28 +93,27 @@ if __name__ == "__main__":
     k1 = f"decrypted_data"
     dec_path = "./dec_file/"
     inter_path1 = "./inter_file/"
+    header = b"test_header"
 
     sk,pk = PAE_kgen(protocol, uid, pw)
     st = secrets.token_bytes(16)  # Example session token
     m_path = "./500mb"  # Path to the file to be encrypted
     k5 = "c1_path_111"  # Example key for encryption
     for i in range(5):
-        print(f"\n======== 第 {i+1} 轮测试 ========")
         start_time = time.time()
         a = PAE_ext(protocol,uid,pw,st)
         end_time = time.time()
         PAE_ext_time = (end_time - start_time) * 1000
 
-        ciphertext_stream, c0, u ,PAE_enc_time= PAE_enc(protocol, uid, pw,  pk, st, m_path,inter_path1, k5)
+        ciphertext_stream, c0, u ,PAE_enc_time= PAE_enc(protocol, uid, pw,  pk, st, m_path,inter_path1, k5,header)
 
-        # print(f"Ciphertext Stream: {ciphertext_stream.getvalue()[:64]}...")  # Print first 64 bytes for brevity
-        u_sk = pow(u, sk, protocol.P)   # Example user secret key derived from u and sk
+        sk_priv_obj = ec.derive_private_key(sk, protocol.ec_curve, default_backend())
+        # sk * u_obj
+        u_sk_bytes = sk_priv_obj.exchange(ec.ECDH(), u)
         start_time = time.time()
-        decrypted_stream = PAE_dec(protocol, uid, pw, u_sk, dec_path,k5, st, ciphertext_stream, c0)
+        decrypted_stream = PAE_dec(protocol, uid, pw, u_sk_bytes, dec_path,k5, st, ciphertext_stream, c0,header)
         end_time = time.time()
         PAE_dec_time = (end_time - start_time) * 1000
-
-        print("PAE_enc_time: {:.2f} ms".format(PAE_enc_time))
         print("PAE_dec_time: {:.2f} ms".format(PAE_dec_time))
 
         metrics_total["PAE_Ext_time"] += PAE_ext_time
@@ -127,5 +123,4 @@ if __name__ == "__main__":
     print("\n======== 📊 平均耗时统计（单位：ms）========")
     for key in metrics_total:
         avg_time = metrics_total[key] / 5
-
         print(f"{key}: {avg_time:.2f} ms")
