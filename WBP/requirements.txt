@@ -1,0 +1,4 @@
+# WBP (Davies et al. Crypto'23) — Python baseline
+cryptography>=42
+opaque-snake>=0.1.1
+openpyxl>=3.1
