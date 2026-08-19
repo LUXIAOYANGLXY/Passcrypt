@@ -1,0 +1,5 @@
+cryptography>=42.0.0
+pytest>=8.0.0
+openpyxl>=3.1.0
+# 可选：遗留 Flask HTTP Server（server/app.py）；默认通信为 TCP（serve.py）
+# flask>=3.0.0
