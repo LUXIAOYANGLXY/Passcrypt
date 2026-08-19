@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cryptogram"
+version = "0.1.2"
+description = "Ultra-fast AES-256 cryptography for Telegram MTProto - AES-NI accelerated, API-compatible with tgcrypto and cryptg"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Ankit Chaubey", email = "ankitchaubey.dev@gmail.com" }
+]
+keywords = ["telegram", "mtproto", "aes", "cryptography", "telethon", "pyrogram", "aesni"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: C",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Communications :: Chat",
+]
+requires-python = ">=3.8"
+dependencies = []
+# cryptography is used only by the pure-Python fallback backend (_fallback.py).
+# Keeping it as a hard dependency causes pip to try building it from source on
+# platforms without a pre-built wheel (e.g. manylinux i686, Python 3.8), which
+# fails because cryptography's own build dep 'puccinialin' requires Python>=3.9.
+# Users who need the fallback can install it manually: pip install cryptography
+[project.optional-dependencies]
+fallback = ["cryptography>=3.0"]
+
+[project.urls]
+Homepage = "https://github.com/ankit-chaubey/cryptogram"
+Repository = "https://github.com/ankit-chaubey/cryptogram"
+"Bug Tracker" = "https://github.com/ankit-chaubey/cryptogram/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cryptogram*"]
