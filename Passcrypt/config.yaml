@@ -1,0 +1,29 @@
+# 本地版默认；云部署时只改 network / storage
+mode: local
+
+network:
+  # 服务端 bind 地址：必须用本机网卡地址。
+  # EC2 / 云上请用 0.0.0.0（监听所有网卡）；不要填公网 Elastic IP（会 Errno 99）。
+  # 客户端连远程时用：python -m experiment.tcp_benchmark --host <公网IP> --port 5202
+  host: 0.0.0.0
+  port: 5202
+
+storage:
+  backend: local
+  local_root: ./data/server
+
+crypto:
+  # 配对后端：bls12_381（默认=pymcl/mcl，高性能）| py_ecc_bls12_381 | mcl | py_ecc
+  # backend: bls12_381
+  backend: secp256r1
+  # CTR 默认 cryptography；可选 PAEE_AES_CTR_BACKEND=cryptogram|openssl
+  se_alg: AES-256-CTR
+  file_ae: AES-256-CTR
+  wrap_ae: AES-256-GCM
+  # λ 字节：H3/H4/ctx 长度（32 = 256-bit 摘要；整体安全级跟随 BLS12-381 ≈128-bit）
+  lambda_bytes: 32
+
+paths:
+  client_work: ./data/client
+  # 带外公钥（从 Server 的 data/server/keys/server_pk.json 复制）
+  server_pk: ./data/client/server_pk.json
