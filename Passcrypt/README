@@ -18,6 +18,11 @@ Please first log in to your AWS account via https://aws.amazon.com/ and create s
 If other cloud storage services are required, slight modifications to the Client class implementation are needed to adapt to the APIs 
 provided by the target storage cloud. The current prototype only supports AWS S3 as the storage server.
 In standard usage scenarios, the client and key server should be deployed on different devices.
+*Dependencies (see requirements.txt):pip install -r requirements.txt
+
+***Configuration***
+config.yaml
+
 
 ***Preparation***
 Ensure the above requirements are met and complete the following preparations:
@@ -27,7 +32,7 @@ Please refer to https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types
 Credential information must be configured by yourself in the config.properties file.
 
 ***Test Datasets***
-The test data consists of binary files ranging from 1MB to 400MB.
+The test data consists of binary files ranging from 1MB to 500MB.
 Command to generate test datasets:
 Open a terminal and use the following command to generate an nMB file: fsutil file createnew 1nmb 1048576n
 
@@ -38,10 +43,15 @@ Python [main] [client] [source file path] [security level]
 Terminal 2: python main.py client \DataFile\1mb  1
 
 ***Testing Instructions***
-Generate binary files ranging from 1MB to 400MB, execute the code, and record data such as code execution time.
+Generate binary files ranging from 1MB to 500MB, execute the code, and record data such as code execution time.
 
-***PAE-TEST***
-Conduct performance testing of PAE locally.
-Measure the execution time of each phase of PAE with different file sizes by running the command: python PAE_test.py.
-Measure the execution time of each phase of the PAE protocol with different password lengths by running the command: python PAE_test_pw.py.
-
+***PAEE/PassCrypt-TEST***
+experiment/
+server:python main.py server
+client:
+python -m experiment.tcp_benchmark --trials 100 --host 35.78.207.231 --port 5202 
+python -m experiment.password_length_bench --trials 100 --host 35.78.207.231 --port 5202
+python -m experiment.file_size_proto_bench --trials 100 --host 35.78.207.231 --port 5202
+python -m experiment.file_size_proto_bench_tau_no_ct2 --trials 100 --host 35.78.207.231 --port 5202
+python -m experiment.file_size_crypto_bench --trials 100 
+python -m experiment.file_size_crypto_bench_tau_no_ct2 --trials 100
