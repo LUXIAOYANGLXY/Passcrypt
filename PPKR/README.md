@@ -4,7 +4,7 @@
 
 PPKR (Password-Protected Key Retrieval) is a system for securely storing and retrieving a high-entropy data encryption key \(K\) with only a low-entropy password. The implementation follows **"Password-Protected Key Retrieval with(out) HSM Protection"** (Faller et al., ACM CCS 2024).
 
-This repository includes a **Client**, a **TCP Server** , and experiment scripts. Supported operations:
+This repository includes a **Client**, a **Server** , and experiment scripts. Supported operations:
 
 * **Init (Register / Give)**: Client registers under identity `idc` with a password and stores a protected copy of the data encryption key \(K\) via the Server/HSM.
 * **Rec (Take)**: Client reconstructs \(K\) from the password and Server/HSM interaction.
@@ -61,8 +61,6 @@ python serve.py --host 0.0.0.0 --port 8765
 python run_client.py --host <IP> --port 8765 --protocol oprf_ppkr
 python -m experiment.tcp_benchmark --host <IP> --port 8765 --trials 20
 ```
-
-Legacy Flask HTTP (`server/app.py`) is not the default path.
 
 
 **test datasets**
