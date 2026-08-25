@@ -45,7 +45,7 @@ We have generated the self-signed CA root certificate using OpenSSL, and use it 
 
 **test datasets**
 
-The test data consists of binary files ranging from 1MB to 700MB.
+The test data consists of binary files ranging from 1MB to 500MB.
 
 Generation operation of test dataset:
 
