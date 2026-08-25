@@ -61,10 +61,10 @@ Flag	Default	Meaning
 
 Server examples:
 
-# localhost
+
 python run_server.py --host 127.0.0.1 --port 8765
 
-# EC2 / LAN (must listen on all interfaces)
+
 python run_server.py --host 0.0.0.0 --port 8765
 
 Test datasets
@@ -83,7 +83,7 @@ Run
 Terminal 1 — Server:
 
 python run_server.py
-# or: python run_server.py --host 0.0.0.0 --port 8765
+
 Terminal 2 — Client:
 
 python run_client.py --idc demo-user --password demo-password --mode both
@@ -119,16 +119,16 @@ python run_server.py --host 0.0.0.0 --port 8765
 
 Then on the Client machine:
 
-# Baseline: Init≈Enc_proto / Rec≈Dec_proto — latency + communication
+
 python -m experiment.tcp_benchmark --trials 20 --host <EC2_IP> --port 8765 -q
 
-# Experiment 1: password length scan (L = 8…512)
+
 python -m experiment.password_length_bench --trials 20 --host <EC2_IP> --port 8765 -q
 
-# Experiment 3: file size vs Enc/Dec (password length fixed = 16)
+
 python -m experiment.file_size_proto_bench --trials 3 --host <EC2_IP> --port 8765 -q
 
-# Optional: file AE after key retrieval / end-to-end key+file
+
 python -m experiment.file_encrypt_bench --trials 5 --sizes 1 10 100 --host <EC2_IP> --port 8765 -q
 python -m experiment.e2e_key_file_bench --trials 5 --sizes 1 10 100 --host <EC2_IP> --port 8765 -q
 
