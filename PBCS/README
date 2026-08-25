@@ -41,6 +41,29 @@ Certificates for TLS communication.
 * During the communication between client and key server/cloud server, the client authenticates key server and cloud server via servers' certificates. 
 We have generated the self-signed CA root certificate using OpenSSL, and use it to sign the key server certificate. You can find the required certificates in E2se4j/certificateNew.
 
+**Environment Requirements**
+*Python 3.8+*
+*Dependencies (see requirements.txt):
+bash
+pip install -r requirements.txt
+
+To run the full cloud workflow: an AWS account with S3 programmatic access credentials is required
+AuthServer and Client can be deployed on separate machines, or can be debugged locally using two processes on the same machine
+
+**Configuration**
+Edit config.properties:
+
+```ini
+[DEFAULT]
+accessKeyId = local
+secretKeyId = local
+regionName = ap-northeast-3
+bucketName = local-bucket
+authServerIp = 127.0.0.1
+authServerPort = 20202
+authServerName = CN=usyd.authserver,OU=authserver,O=server,L=sydney,ST=NSW,C=AU
+useLocalSim = true
+
   
 
 **test datasets**
@@ -67,3 +90,11 @@ Terminal 2：python E2seMain.py client \DataFile\1mb
 **Test**
 
 Generate binary files ranging from 1MB to 200MB, execute the code, and record the execution time of the code.
+
+**experiment**
+
+server：python E2seMain.py authserver
+client：
+python -m experiment.benchmark_key_proto --trials 100 --warmup 1 --host 35.78.207.231  --port 20202 --real-s3
+python -m experiment.file_size_proto_bench --trials 100 --host <EC2_IP> --port 20202 --real-s3
+python -m experiment.file_size_proto_bench_tau_ct2 --trials 100 --host <EC2_IP> --port 20202 --real-s3
